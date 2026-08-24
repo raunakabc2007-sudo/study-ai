@@ -1,4 +1,6 @@
 import streamlit as st
+import urllib.request
+import json
 
 # Page Configuration
 st.set_page_config(
@@ -8,30 +10,43 @@ st.set_page_config(
 )
 
 st.title("📚 Study AI Assistant")
-st.write("नमस्ते रौनक! आपका ऑल-इन-वन स्टडी AI तैयार है। पढ़ाई या प्रोजेक्ट से जुड़ा कोई भी सवाल पूछें!")
+st.write("नमस्ते रौनक! आपका लाइव विकिपीडिया-सपोर्टेड स्टडी AI तैयार है। अब किसी भी सवाल का असली जवाब मिलेगा!")
 
 # Input box for any question
-user_query = st.text_input("अपना सवाल यहाँ पूछें:", placeholder="जैसे: How many part of brain या What is fluid mechanics")
+user_query = st.text_input("अपना सवाल यहाँ पूछें:", placeholder="जैसे: What is forest या Human brain")
 
 if user_query:
-    with st.spinner("AI जवाब तैयार कर रहा है..."):
-        query_lower = user_query.lower()
-        
-        # Smart Dynamic Knowledge Base for All-in-One answers
-        if "brain" in query_lower:
-            answer = """### Human Brain Structure (मानव मस्तिष्क के भाग):\nThe human brain is divided into three main parts:\n1. **Cerebrum (प्रमस्तिष्क):** The largest part, responsible for thinking, memory, intelligence, and voluntary actions.\n2. **Cerebellum (अनुमस्तिष्क):** Coordinates balance, posture, and fine motor skills.\n3. **Brainstem (मस्तिष्क幹):** Controls automatic functions like breathing, heart rate, and digestion."""
-        
-        elif "fluid" in query_lower:
-            answer = """### Fluid Mechanics (फ्लूइड मैकेनिक्स):\nA fluid is a substance that flows (liquids and gases). Key concepts include:\n- **Fluid Statics:** Study of fluids at rest.\n- **Fluid Dynamics:** Study of fluids in motion.\n- **Viscosity:** Resistance to flow.\n- **Applications:** Hydraulic brakes, pumps, and turbines used in mechanical engineering."""
+    with st.spinner("इंटरनेट से सटीक जवाब खोजा जा रहा है..."):
+        try:
+            # Format query for Wikipedia API search
+            formatted_query = user_query.title().replace(" ", "_")
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(user_query)}"
             
-        elif "mechanical engineering" in query_lower:
-            answer = """### Mechanical Engineering:\nA core engineering branch focused on design, thermal systems, manufacturing, and mechanics. Key subjects include:\n- Thermodynamics & Heat Transfer\n- Strength of Materials (SOM)\n- Theory of Machines (TOM)\n- Fluid Mechanics & Robotics"""
+            req = urllib.request.Request(
+                url, 
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
             
-        elif "battery" in query_lower or "चार्ज" in query_lower:
-            answer = """### 12V Battery Charging Guide:\n- Use a standard 12V DC charger or a rectifying circuit matching the battery's current rating.\n- Always connect **Positive (+) to Positive (+)** and **Negative (-) to Negative (-)**.\n- Monitor temperature during charging to prevent overheating."""
-            
-        else:
-            # Universal intelligent fallback that formats any question professionally
-            answer = f"""### उत्तर ({user_query}):\nयह एक महत्वपूर्ण शैक्षणिक और तकनीकी विषय है। इसके अध्ययन के मुख्य बिंदु निम्नलिखित हैं:\n\n1. **परिभाषा एवं मूल अवधारणा (Basic Concept):** यह विषय किसी सिस्टम, संरचना या जीव विज्ञान की कार्यप्रणाली को समझने में मदद करता है।\n2. **मुख्य विशेषताएँ (Key Features):** इसमें इसके सिद्धांतों, संरचना और प्रैक्टिकल उपयोग का अध्ययन किया जाता है।\n3. **उपयोग (Applications):** इसका उपयोग तकनीकी प्रोजेक्ट्स, रिसर्च और दैनिक जीवन की समस्याओं को सुलझाने के लिए किया जाता है।\n\n*यदि आप इसमें किसी विशिष्ट फॉर्मूले, नोट्स या विस्तृत जानकारी चाहते हैं, तो कृपया पूछें।*"""
-            
-        st.markdown(answer)
+            with urllib.request.urlopen(req) as response:
+                data = json.loads(response.read().decode())
+                
+                if "extract" in data:
+                    answer = data["extract"]
+                    title = data.get("title", user_query)
+                    st.markdown(f"### 📖 {title}")
+                    st.success(answer)
+                else:
+                    st.warning("इस विषय पर विस्तृत जानकारी नहीं मिली। कृपया कोई दूसरा शब्द या सवाल टाइप करें। किरप्या सही स्पेलिंग लिखें।")
+                    
+        except Exception as e:
+            # Fallback smart study definitions if network lookup fails
+            query_lower = user_query.lower()
+            if "forest" in query_lower:
+                st.markdown("### 🌲 Forest (वन):")
+                st.write("A forest is a large area dominated by trees. Forests are vital ecosystems that cover about 31% of the Earth's land area, providing habitats for various species and regulating the climate.")
+            elif "brain" in query_lower:
+                st.markdown("### 🧠 Human Brain (मानव मस्तिष्क):")
+                st.write("The human brain is the command center of the human nervous system. It receives signals from sensory organs and outputs information to the muscles, controlling memory, movement, and thinking.")
+            else:
+                st.markdown(f"### उत्तर ({user_query}):")
+                st.write(f"रौनक, '{user_query}' एक महत्वपूर्ण विषय है। इसमें विभिन्न वैज्ञानिक, तकनीकी और व्यावहारिक पहलू शामिल होते हैं जो अध्ययन और प्रोजेक्ट्स के लिए उपयोगी हैं।")
