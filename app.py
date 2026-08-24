@@ -37,3 +37,4 @@ if api_key:
         st.error(f"त्रुटि हुई: {e}")
 else:
     st.warning("कृपया बाईं तरफ के मेनू (Sidebar) में अपनी Gemini API Key दर्ज करें ताकि AI काम कर सके।")
+    
