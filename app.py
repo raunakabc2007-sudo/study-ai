@@ -1,41 +1,65 @@
-import streamlit as st
+         import streamlit as st
+import google.generativeai as genai
+import os
 
-# Page Configuration
+# --- Page Configuration ---
 st.set_page_config(
     page_title="Study AI Assistant",
-    page_icon="📚",
+    page_icon="📚",  # Default favicon
     layout="centered"
 )
 
-st.title("📚 Study AI Assistant")
-st.write("नमस्ते रौनक! आपका सुपर स्टडी AI तैयार है। अब बिना किसी की के हर सवाल का सटीक जवाब मिलेगा!")
+# --- Logo and Title Section ---
+# यह कोड आपके टाइटल के बगल में 'R' लोगो और 'Study AI Assistant' टेक्स्ट को एक साथ दिखाता है
+col1, col2 = st.columns([1, 9])
 
-# Input box for any question
-user_query = st.text_input("अपना सवाल यहाँ पूछें:", placeholder="जैसे: What is engine, Heart, Forest या कोई भी पढ़ाई का सवाल")
+with col1:
+    # यहाँ 'R' का स्टाइलिश लोगो दिखाया गया है
+    st.markdown("""
+        <div style="display: flex; align-items: center; justify-content: center; 
+                    width: 60px; height: 60px; 
+                    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+                    color: white; font-size: 40px; font-weight: bold; 
+                    border-radius: 50%; font-family: sans-serif; 
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            R
+        </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    # यह आपका मुख्य टाइटल और वेलकम मैसेज है
+    st.title("Study AI Assistant")
+
+st.write("नमस्ते रौनक! आपका पर्सनलाइज़्ड 'R' AI पूरी तरह एक्टिव है। अपने मैकेनिकल इंजीनियरिंग या प्रोजेक्ट से जुड़ा सवाल पूछें!")
+
+# --- AI Setup with Streamlit Secrets ---
+try:
+    # 1. API Key को Streamlit Secrets से सुरक्षित रूप से लें
+    # (यह की आपके Streamlit डैशबोर्ड के Secrets बॉक्स में होनी चाहिए)
+    api_key = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=api_key)
+    
+    # 2. Gemini Model को सेट करें (Gemini 1.5 Flash सबसे तेज़ है)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+except Exception as e:
+    st.error(f"API Key लोड करने में समस्या आई। कृपया Streamlit Secrets में 'GEMINI_API_KEY' सही तरह से सेव करें। एरर: {e}")
+    st.stop() # की न मिलने पर ऐप आगे नहीं चलेगी
+
+# --- User Input and AI Processing ---
+# इनपुट बॉक्स
+user_query = st.text_input("अपना सवाल यहाँ पूछें:", placeholder="जैसे: What is fluid dynamics या Explain Bernoulli's principle")
 
 if user_query:
-    with st.spinner("AI उत्तर तैयार कर रहा है..."):
-        query_lower = user_query.lower()
-        
-        # Smart Database for Instant Answers
-        if "engine" in query_lower:
-            answer = """### ⚙️ Engine (इंजन):\nAn engine is a machine designed to convert one form of energy into mechanical energy.\n- **Types:** Internal Combustion (IC) Engine, External Combustion Engine, Electric Engine.\n- **Applications:** Used in cars, bikes, and mechanical machinery."""
-        
-        elif "heart" in query_lower:
-            answer = """### ❤️ Human Heart (मानव हृदय):\nThe heart is a muscular organ that pumps blood through the blood vessels of the circulatory system.\n- It has **4 chambers**: Two atria (upper) and two ventricles (lower).\n- **Function:** Pumps oxygenated blood to the body and deoxygenated blood to the lungs."""
-        
-        elif "forest" in query_lower:
-            answer = """### 🌲 Forest (वन):\nA large area covered chiefly with trees and undergrowth. Forests regulate the global climate, produce oxygen, and act as natural carbon sinks."""
-        
-        elif "fluid" in query_lower:
-            answer = """### 💧 Fluid Mechanics:\nA fluid is a substance that continuously deforms under shear stress (liquids and gases). It includes fluid statics and fluid dynamics."""
-        
-        elif "mechanical engineering" in query_lower:
-            answer = """### 🛠️ Mechanical Engineering:\nA core branch of engineering involving design, thermal systems, manufacturing, and machine mechanics."""
-        
-        else:
-            # Clean formatting for any random question
-            topic = user_query.replace("What is", "").replace("what is", "").strip().title()
-            answer = f"""### 📖 विषय: {topic}\n\n**1. मुख्य परिभाषा (Overview):**\n{topic} एक अत्यंत महत्वपूर्ण विषय है, जिसका उपयोग विज्ञान, तकनीकी और अकादमिक अध्ययन में किया जाता है।\n\n**2. मुख्य बिंदु (Key Details):**\n- यह विषय किसी प्रक्रिया या संरचना को बेहतर तरीके से समझने में मदद करता है।\n- इसके सिद्धांत प्रोजेक्ट्स और परीक्षाओं दोनों के लिए बहुत उपयोगी हैं।\n\n**3. व्यावहारिक उपयोग (Applications):**\nइसका उपयोग आधुनिक तकनीकी विकास और दैनिक जीवन की समस्याओं को सुलझाने के लिए किया जाता है।"""
+    with st.spinner("रौनक का 'R' AI जवाब सोच रहा है..."):
+        try:
+            # 3. AI को सवाल भेजना और जवाब पाना
+            response = model.generate_content(user_query)
             
-        st.markdown(answer)
+            # 4. AI के जवाब को स्क्रीन पर दिखाना
+            st.markdown("### उत्तर:")
+            st.success(response.text)
+            
+        except Exception as e:
+            st.error(f"जवाब जनरेट करते समय एक एरर आया: {e}")
+            st.info("यह अक्सर API Key की लिमिट खत्म होने या नेटवर्क की समस्या के कारण होता है।")   
