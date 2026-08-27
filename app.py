@@ -1,10 +1,10 @@
 import streamlit as st
-from groq import Groq
+import google.generativeai as genai
 
 st.set_page_config(page_title="Study AI Assistant", page_icon="📚")
 
-# आपकी नई और सही API Key यहाँ सेट है
-GROQ_API_KEY = "Gsk_3XmxCMGR46kXYVpN1CcgWGdyb3FYW33l9QYTIbgLD7gyWtS5gy9u"
+# आपकी Gemini API Key यहाँ सेट है
+GOOGLE_API_KEY = "AQ.Ab8RN6LvOVraZuOALW07gNycPgEa4cuTQBuZE0wMbeCd2giWzQ"
 
 st.title("Study AI Assistant")
 st.write("नमस्ते रौनक! आपका एआई पूरी तरह से तैयार है।")
@@ -13,13 +13,13 @@ query = st.text_input("अपना सवाल यहाँ पूछें:")
 
 if query:
     try:
-        client = Groq(api_key=GROQ_API_KEY)
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
         with st.spinner("AI सोच रहा है..."):
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": query}],
-                model="llama-3.3-70b-versatile",
-            )
+            response = model.generate_content(query)
             st.markdown("### 📖 उत्तर:")
-            st.write(chat_completion.choices[0].message.content)
+            st.write(response.text)
+            
     except Exception as e:
         st.error(f"Error: {e}")
